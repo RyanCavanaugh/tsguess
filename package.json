@@ -1,0 +1,30 @@
+{
+  "name": "tsguess",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "tsguess": "index.js"
+  },
+  "dependencies": {
+    "typescript": "^2.1.0-dev.20160718",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^4.0.29",
+    "@types/underscore": "^1.7.27"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyanCavanaugh/tsguess.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/RyanCavanaugh/tsguess/issues"
+  },
+  "homepage": "https://github.com/RyanCavanaugh/tsguess#readme"
+}
