@@ -130,30 +130,6 @@ function getParameterListAndReturnType(obj: Function, fn: ts.FunctionExpression)
 		return [args.join(', '), 'any'];
 	} else {
 		ts.forEachChild(fn, visit);
-		function visit(node: ts.Node) {
-			switch (node.kind) {
-				case ts.SyntaxKind.Identifier:
-					if ((node as ts.Identifier).getText() === 'arguments') {
-						usedArguments = true;
-					}
-					break;
-				case ts.SyntaxKind.ReturnStatement:
-					if (funcStack.length === 0 && (node as ts.ReturnStatement).expression && (node as ts.ReturnStatement).kind !== ts.SyntaxKind.VoidExpression) {
-						hasReturn = true;
-					}
-			}
-			switch (node.kind) {
-				case ts.SyntaxKind.FunctionExpression:
-				case ts.SyntaxKind.FunctionDeclaration:
-					funcStack.push(true);
-					ts.forEachChild(node, visit);
-					funcStack.pop();
-
-				default:
-					ts.forEachChild(node, visit);
-					break;
-			}
-		}
 
 		let args = fn.parameters.map(p => `${p.name.getText()}: ${inferParameterType(fn, p)}`);
 		if (usedArguments) {
@@ -161,6 +137,32 @@ function getParameterListAndReturnType(obj: Function, fn: ts.FunctionExpression)
 		}
 		return [args.join(', '), hasReturn ? 'any' : 'void'];
 	}
+	
+	function visit(node: ts.Node) {
+		switch (node.kind) {
+			case ts.SyntaxKind.Identifier:
+				if ((node as ts.Identifier).getText() === 'arguments') {
+					usedArguments = true;
+				}
+				break;
+			case ts.SyntaxKind.ReturnStatement:
+				if (funcStack.length === 0 && (node as ts.ReturnStatement).expression && (node as ts.ReturnStatement).kind !== ts.SyntaxKind.VoidExpression) {
+					hasReturn = true;
+				}
+		}
+		switch (node.kind) {
+			case ts.SyntaxKind.FunctionExpression:
+			case ts.SyntaxKind.FunctionDeclaration:
+				funcStack.push(true);
+				ts.forEachChild(node, visit);
+				funcStack.pop();
+
+			default:
+				ts.forEachChild(node, visit);
+				break;
+		}
+	}
+
 }
 
 function inferParameterType(fn: ts.FunctionExpression, param: ts.ParameterDeclaration) {
