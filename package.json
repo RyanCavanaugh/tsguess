@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "@types/node": "^4.0.29",
-    "@types/underscore": "^1.7.27"
+    "@types/underscore": "^1.7.27",
+    "@types/yargs": "0.0.27"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
