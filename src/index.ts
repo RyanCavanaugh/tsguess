@@ -131,13 +131,16 @@ function getParameterListAndReturnType(obj: Function, fn: ts.FunctionExpression)
 	} else {
 		ts.forEachChild(fn, visit);
 
-		let args = fn.parameters.map(p => `${p.name.getText()}: ${inferParameterType(fn, p)}`);
-		if (usedArguments) {
-			args.push('...args: any[]');
+		let params = ['...args: any[]'];
+		if (fn.parameters) {
+			params = fn.parameters.map(p => `${p.name.getText()}: ${inferParameterType(fn, p)}`);
+			if (usedArguments) {
+				params.push('...args: any[]');
+			}
 		}
-		return [args.join(', '), hasReturn ? 'any' : 'void'];
+		return [params.join(', '), hasReturn ? 'any' : 'void'];
 	}
-	
+
 	function visit(node: ts.Node) {
 		switch (node.kind) {
 			case ts.SyntaxKind.Identifier:
