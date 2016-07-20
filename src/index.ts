@@ -7,13 +7,17 @@ export function guess(obj: any): string {
 	do {
 		keys = keys.concat(Object.getOwnPropertyNames(chain))
 		chain = Object.getPrototypeOf(chain);
-	} while (chain !== null && chain !== Object.prototype);
-	keys = _.unique(keys);
+	} while (chain !== null && chain !== Object.prototype && chain !== Function.prototype);
+	keys = _.unique(keys).filter(s => isVisitableName(s));
 
 	const declarations = keys.map(key => guessDeclaration(key, obj[key]));
 	declarations.sort(declarationComparer);
 
 	return declarations.map(decl => decl.lines.join('\r\n')).join('\r\n');
+}
+
+function isVisitableName(s: string) {
+	return ["caller", "arguments"].indexOf(s) < 0;
 }
 
 interface Declaration {
@@ -27,16 +31,20 @@ function guessDeclaration(name: string, obj: any): Declaration {
 		const parsedFunction = parseFunctionBody(obj);
 		const info = getParameterListAndReturnType(obj, parsedFunction);
 		if ((obj.prototype === undefined) ||
-			(obj.prototype && obj.prototype.__proto__ === Object.prototype)) {
+			(Object.keys(obj.prototype).length === 0)) {
 			return {
 				name,
 				lines: [`declare function ${name}(${info[0]}): ${info[1]};`],
 				kind: "function"
 			}
 		} else {
+			const classBody: string[] = [`constructor(${info[0]});`];
+			classBody.push(...getClassPrototypeMembers(obj));
+			classBody.push(...getClassInstanceMembers(obj));
+			const lines = [`declare class ${name} {`].concat(classBody.map(s => '    ' + s)).concat(`}`);
 			return {
 				name,
-				lines: [`declare class ${name} {`, `    constructor(${info[0]});`, `}`],
+				lines,
 				kind: "class"
 			}
 		}
@@ -44,11 +52,61 @@ function guessDeclaration(name: string, obj: any): Declaration {
 		return { name, kind: "variable", lines: [`declare const ${name}: any;`] }
 	} else if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
 		return { name, kind: "variable", lines: [`declare const ${name}: ${typeof obj};`] }
-	} else if (typeof obj === 'null') {
-		return { name, kind: "variable", lines: [`// Property ${name} was 'null'`, `declare const ${name}: any;`] }
+	} else if (typeof obj === 'null' || typeof obj === 'undefined') {
+		return { name, kind: "variable", lines: [`// Property ${name} was '${typeof obj}'`, `declare const ${name}: any;`] }
 	} else {
 		return { name, kind: "variable", lines: [`// Property ${name} was of unrecognized type '${typeof obj}'`, `declare const ${name}: any;`] }
 	}
+}
+
+function getClassPrototypeMembers(ctor: any): string[] {
+	const names = Object.getOwnPropertyNames(ctor.prototype);
+
+	return names.filter(n => !isNameToSkip(n)).map(name => getPrototypeMember(name, ctor.prototype[name]));
+
+	function getPrototypeMember(name: string, obj: any) {
+		if (typeof obj !== 'function') {
+			return '';
+		}
+
+		if (isNativeFunction(obj)) {
+			return  `${name}(...args: any[]): any;`;
+		} else {
+			const funcType = getParameterListAndReturnType(obj, parseFunctionBody(obj));
+			return `${name}(${funcType[0]}): ${funcType[1]};`;
+		}
+	}
+
+	function isNameToSkip(s: string) {
+		return (s === 'constructor') || (s[0] === '_');
+	}
+}
+
+function getClassInstanceMembers(ctor: any): string[] {
+	if (isNativeFunction(ctor)) {
+		return [];
+	}
+
+	const body = parseFunctionBody(ctor);
+	const members: string[] = [];
+
+	function visit(node: ts.Node) {
+		switch(node.kind) {
+			case ts.SyntaxKind.BinaryExpression:
+				if ((node as ts.BinaryExpression).operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+					const lhs = (node as ts.BinaryExpression).left;
+					if (lhs.kind === ts.SyntaxKind.PropertyAccessExpression) {
+						if ((lhs as ts.PropertyAccessExpression).expression.kind === ts.SyntaxKind.ThisKeyword) {
+							members.push((lhs as ts.PropertyAccessExpression).name.getText() + ': any;');
+						}
+					}
+				}
+				break;
+		}
+		ts.forEachChild(node, visit);
+	}
+
+	return members;
 }
 
 function declarationComparer(left: Declaration, right: Declaration) {
@@ -64,9 +122,7 @@ function getParameterListAndReturnType(obj: Function, fn: ts.FunctionExpression)
 	let hasReturn = false;
 	const funcStack: boolean[] = [];
 
-	const isNativeFunction = obj.toString().indexOf('{ [native code] }') > 0;
-
-	if (isNativeFunction) {
+	if (isNativeFunction(obj)) {
 		const args: string[] = [];
 		for (let i = 0; i < obj.length; i++) {
 			args.push(`p${i}: any`);
@@ -118,5 +174,9 @@ function parseFunctionBody(fn: any): ts.FunctionExpression {
 	const decl = statement.declarationList.declarations[0];
 	const init = decl.initializer as ts.FunctionExpression;
 	return init;
+}
+
+function isNativeFunction(fn: any) {
+	return fn.toString().indexOf('{ [native code] }') > 0;
 }
 
