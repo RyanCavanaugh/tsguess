@@ -17,3 +17,4 @@ if (args.module) {
 	console.log('Usage: tsguess -m moduleName');
 	console.log('Example: tsguess -m fs');
 }
+
