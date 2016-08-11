@@ -31,5 +31,6 @@ import guess = require('../lib');
 			output.value = guess.generateIdentifierDeclarationFile(input.value, eval(input.value));
 		});
 	}, 10);
+	
 	document.body.appendChild(displayWindow);
 })();

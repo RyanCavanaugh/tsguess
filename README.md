@@ -5,5 +5,5 @@ var s = document.createElement('script'); s.src = 'https://ryancavanaugh.github.
 
 
 ```js
-var s = document.createElement('script'); s.src = 'https://localhost/browser.js'; document.body.appendChild(s);
+var s = document.createElement('script'); s.src = 'http://localhost:8080/browser-bundle.js'; document.body.appendChild(s);
 ```

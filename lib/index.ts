@@ -15,6 +15,10 @@ const enum ValueTypes {
 	Unknown = 1 << 5
 }
 
+const builtins: { [name: string]: (new(...args: any[]) => any)|undefined } = {
+	"HTMLElement": (typeof HTMLElement !== 'undefined') ? HTMLElement : undefined
+};
+
 function getValueTypes(value: any): ValueTypes {
 	if (typeof value === 'object') {
 		// Objects can't be callable, so no need to check for class / function
@@ -163,6 +167,11 @@ function getTypeOfValue(value: any): dom.Type {
 	return res;
 
 	function getResult() {
+		for(const k in builtins) {
+			if (builtins[k] && value instanceof builtins[k]!) {
+				return create.namedTypeReference(k);
+			}
+		}
 		switch (typeof value) {
 			case 'string':
 			case 'number':
