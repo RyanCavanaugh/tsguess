@@ -2,11 +2,13 @@
 	"files": [
 		"lib/index.ts",
 		"lib/run.ts",
+        "browser/browser.ts",
         "tests/test.ts"
 	],
     "compilerOptions": {
+        "lib": ["es6", "dom"],
         "module": "commonjs",
-        "target": "es6",
+        "target": "es5",
         "noImplicitAny": true,
         "strictNullChecks": true,
         "sourceMap": false,
