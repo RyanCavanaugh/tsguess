@@ -10,9 +10,9 @@ declare namespace react {
         setState(partialState: any, callback: any): void;
     }
     const version: string;
-    function cloneElement(element: any, props: any, children: any, args: any[]): any;
+    function cloneElement(element: any, props: any, children: any, ...args: any[]): any;
     function createClass(spec: any): any;
-    function createElement(type: any, props: any, children: any, args: any[]): any;
+    function createElement(type: any, props: any, children: any, ...args: any[]): any;
     function createFactory(type: any): any;
     function createMixin(mixin: any): any;
     function isValidElement(object: any): any;

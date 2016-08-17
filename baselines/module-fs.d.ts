@@ -48,7 +48,7 @@ declare namespace fs {
     const X_OK: number;
     function access(path: any, mode: any, callback: any): void;
     function accessSync(path: any, mode: any): void;
-    function appendFile(path: any, data: any, options: any, callback_: any, args: any[]): void;
+    function appendFile(path: any, data: any, options: any, callback_: any, ...args: any[]): void;
     function appendFileSync(path: any, data: any, options: any): void;
     function chmod(path: any, mode: any, callback: any): void;
     function chmodSync(path: any, mode: any): any;
@@ -80,12 +80,12 @@ declare namespace fs {
     function lstatSync(path: any): any;
     function mkdir(path: any, mode: any, callback: any): void;
     function mkdirSync(path: any, mode: any): any;
-    function open(path: any, flags: any, mode: any, callback_: any, args: any[]): void;
+    function open(path: any, flags: any, mode: any, callback_: any, ...args: any[]): void;
     function openSync(path: any, flags: any, mode: any): any;
-    function read(fd: any, buffer: any, offset: any, length: any, position: any, callback: any, args: any[]): any;
-    function readFile(path: any, options: any, callback_: any, args: any[]): void;
+    function read(fd: any, buffer: any, offset: any, length: any, position: any, callback: any, ...args: any[]): any;
+    function readFile(path: any, options: any, callback_: any, ...args: any[]): void;
     function readFileSync(path: any, options: any): any;
-    function readSync(fd: any, buffer: any, offset: any, length: any, position: any, args: any[]): any;
+    function readSync(fd: any, buffer: any, offset: any, length: any, position: any, ...args: any[]): any;
     function readdir(path: any, callback: any): void;
     function readdirSync(path: any): any;
     function readlink(path: any, callback: any): void;
@@ -98,7 +98,7 @@ declare namespace fs {
     function rmdirSync(path: any): any;
     function stat(path: any, callback: any): void;
     function statSync(path: any): any;
-    function symlink(target: any, path: any, type_: any, callback_: any, args: any[]): void;
+    function symlink(target: any, path: any, type_: any, callback_: any, ...args: any[]): void;
     function symlinkSync(target: any, path: any, type: any): any;
     function truncate(path: any, len: any, callback: any): any;
     function truncateSync(path: any, len: any): any;
@@ -107,10 +107,10 @@ declare namespace fs {
     function unwatchFile(filename: any, listener: any): void;
     function utimes(path: any, atime: any, mtime: any, callback: any): void;
     function utimesSync(path: any, atime: any, mtime: any): void;
-    function watch(filename: any, args: any[]): any;
+    function watch(filename: any, ...args: any[]): any;
     function watchFile(filename: any, options: any, listener: any): any;
     function write(fd: any, buffer: any, offset: any, length: any, position: any, callback: any): any;
-    function writeFile(path: any, data: any, options: any, callback_: any, args: any[]): void;
+    function writeFile(path: any, data: any, options: any, callback_: any, ...args: any[]): void;
     function writeFileSync(path: any, data: any, options: any): void;
     function writeSync(fd: any, buffer: any, offset: any, length: any, position: any): any;
 }

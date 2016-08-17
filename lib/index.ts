@@ -16,6 +16,9 @@ const enum ValueTypes {
 }
 
 const builtins: { [name: string]: (new(...args: any[]) => any)|undefined } = {
+	Date,
+	RegExp,
+	"Map": (typeof Map !== 'undefined') ? Map : undefined,
 	"HTMLElement": (typeof HTMLElement !== 'undefined') ? HTMLElement : undefined
 };
 
@@ -51,12 +54,12 @@ function hasFunduleProperties(fn: any): boolean {
 export function generateModuleDeclarationFile(nameHint: string, root: any) {
 	const decls = getTopLevelDeclarations(nameHint, root);
 
-	return decls.map(dom.emit).join('\r\n');
+	return decls.map(d => dom.emit(d)).join('\r\n');
 }
 
 export function generateIdentifierDeclarationFile(name: string, value: any): string {
 	const result = getTopLevelDeclarations(name, value)
-	return result.map(dom.emit).join('\r\n');
+	return result.map(d => dom.emit(d)).join('\r\n');
 }
 
 const walkStack = new Map<any, boolean>();
@@ -91,14 +94,19 @@ function isClasslike(obj: object): boolean {
 	return !!(obj.prototype && Object.getOwnPropertyNames(obj.prototype).length > 1);
 }
 
+let keyStack: string[] = [];
 function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaration[] {
-	if (walkStack.has(obj)) {
-		// Circular reference
-		return [create.const(name, dom.type.any)];
+	if (walkStack.has(obj) || keyStack.length > 4) {
+		// Circular or too-deep reference
+		const result = create.const(name, dom.type.any);
+		result.comment = `${walkStack.has(obj) ? 'Circular reference' : 'Too-deep object hierarchy'} from ${keyStack.join('.')}`; 
+		return [result];
 	}
 
 	walkStack.set(obj);
+	keyStack.push(name);
 	const res = getResult();
+	keyStack.pop();
 	walkStack.delete(obj);
 	return res;
 
@@ -127,12 +135,10 @@ function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaratio
 				return [dom.create.function(name, info[0], info[1])];
 			}
 		} else if (typeof obj === 'object') {
-			if (Array.isArray(obj)) {
-				if (obj.length > 0) {
-					return [dom.create.const(name, create.array(getTypeOfValue(obj[0])))];
-				} else {
-					return [dom.create.const(name, create.array(dom.type.any))];
-				}
+			// If we can immediately resolve this to a simple declaration, just do so
+			const simpleType = getTypeOfValue(obj);
+			if (typeof simpleType === 'string' || simpleType.kind === 'name' || simpleType.kind === 'array') {
+				return [dom.create.const(name, simpleType)];
 			}
 
 			// If anything in here is classlike or functionlike, write it as a namespace.
@@ -152,7 +158,7 @@ function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaratio
 				ns.members.sort(declarationComparer);
 				return [ns];
 			} else {
-				return [dom.create.const(name, getTypeOfValue(obj))];
+				return [dom.create.const(name, simpleType)];
 			}
 		} else if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
 			return [create.const(name, <dom.Type>(typeof obj))];
@@ -172,6 +178,15 @@ function getTypeOfValue(value: any): dom.Type {
 				return create.namedTypeReference(k);
 			}
 		}
+
+		if (Array.isArray(value)) {
+			if (value.length > 0) {
+				return create.array(getTypeOfValue(value[0]));
+			} else {
+				return create.array(dom.type.any);
+			}
+		}
+
 		switch (typeof value) {
 			case 'string':
 			case 'number':
@@ -180,9 +195,7 @@ function getTypeOfValue(value: any): dom.Type {
 			case 'undefined':
 				return dom.type.any;
 			case 'object':
-				if (value instanceof Date) {
-					return create.namedTypeReference('Date');
-				} else if (value === null) {
+				if (value === null) {
 					return dom.type.any;
 				} else {
 					walkStack.set(value);

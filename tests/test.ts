@@ -20,6 +20,7 @@ selfRefExpr.self = selfRefExpr;
 const expressions: { [s: string]: any } = {
 	'Math': Math,
 	'selfref': selfRefExpr,
+	'builtIns': { d: new Date(3), arr: ['x']},
 	'someArray': [ 1, 'foo', Math, null, undefined, false ]
 };
 
