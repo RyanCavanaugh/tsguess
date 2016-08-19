@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import * as _ from 'underscore';
-import * as dom from 'ts-dom';
-import { create } from 'ts-dom';
+import * as dom from 'dts-dom';
+import { create } from 'dts-dom';
 
 type object = { valueOf: 'oops '; prototype?: object; (): void;[s: string]: any; };
 
@@ -238,12 +238,12 @@ function getClassPrototypeMembers(ctor: any): dom.ClassMember[] {
 			return undefined;
 		}
 
+		const funcType = getParameterListAndReturnType(obj, parseFunctionBody(obj));
+		const result = create.method(name, funcType[0], funcType[1]);
 		if (isNativeFunction(obj)) {
-			return create.method(name, [create.parameter('args', dom.type.array(dom.type.any), dom.ParameterFlags.Rest)], dom.type.any);
-		} else {
-			const funcType = getParameterListAndReturnType(obj, parseFunctionBody(obj));
-			return create.method(name, funcType[0], funcType[1]);
+			result.comment = 'Native method; no parameter or return type inference available';
 		}
+		return result;
 	}
 
 	function isNameToSkip(s: string) {
