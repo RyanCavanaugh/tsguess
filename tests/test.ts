@@ -7,7 +7,7 @@ const testModuleNames = [
 	'path',
 	'lodash',
 	'jquery',
-	'react'
+	'yargs'
 ];
 
 const selfRefExpr = {

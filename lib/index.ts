@@ -53,8 +53,18 @@ function hasFunduleProperties(fn: any): boolean {
 
 export function generateModuleDeclarationFile(nameHint: string, root: any) {
 	const decls = getTopLevelDeclarations(nameHint, root);
-
-	return decls.map(d => dom.emit(d)).join('\r\n');
+	// If we get back just a namespace, we can avoid writing an export=
+	if (decls.length === 1 && decls[0].kind === 'namespace') {
+		// Hoist out all the declarations and export them
+		const members = (decls[0] as dom.NamespaceDeclaration).members;
+		for (const m of members) m.flags |= dom.DeclarationFlags.Export;
+		return members.map(m => dom.emit(m)).join('');
+	} else {
+		// Going to have to write an export=
+		const result: string[] = decls.map(d => dom.emit(d));
+		result.unshift(dom.emit(dom.create.exportEquals(nameHint)));
+		return result.join('');
+	}
 }
 
 export function generateIdentifierDeclarationFile(name: string, value: any): string {
@@ -110,7 +120,7 @@ function isClasslike(obj: object): boolean {
 }
 
 let keyStack: string[] = [];
-function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaration[] {
+function getTopLevelDeclarations(name: string, obj: any): dom.NamespaceMember[] {
 	if (walkStack.has(obj) || keyStack.length > 4) {
 		// Circular or too-deep reference
 		const result = create.const(name, dom.type.any);
@@ -127,30 +137,32 @@ function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaratio
 	walkStack.delete(obj);
 	return res;
 
-	function getResult(): dom.TopLevelDeclaration[] {
+	function getResult(): dom.NamespaceMember[] {
 		if (typeof obj === 'function') {
 			const funcType = getParameterListAndReturnType(obj as any as Function, parseFunctionBody(obj));
+			let primaryDecl: dom.NamespaceMember;
 			if (isClasslike(obj)) {
 				const cls = dom.create.class(name)
 				getClassInstanceMembers(obj).forEach(m => cls.members.push(m));
 				getClassPrototypeMembers(obj).forEach(m => cls.members.push(m));
 				cls.members.push(dom.create.constructor(funcType[0]));
 				cls.members.sort(declarationComparer);
-
-				// Get clodule members
-				const ns = dom.create.namespace(name);
-				const keys = getKeysOfObject(obj);
-				for (const k of keys) {
-					getTopLevelDeclarations(k!, obj[k!]).forEach(p => ns.members.push(p));
-				}
-
-				return ns.members.length > 0 ? [cls, ns] : [cls];
+				primaryDecl = cls;
 			} else {
-				// TODO: Get fundule members
 				const parsedFunction = parseFunctionBody(obj);
 				const info = getParameterListAndReturnType(obj as {} as Function, parsedFunction);
-				return [dom.create.function(name, info[0], info[1])];
+				primaryDecl = dom.create.function(name, info[0], info[1]);
 			}
+
+			// Get clodule/fundule members
+			const ns = dom.create.namespace(name);
+			const keys = getKeysOfObject(obj);
+			for (const k of keys) {
+				getTopLevelDeclarations(k!, obj[k!]).forEach(p => ns.members.push(p));
+				ns.members.sort(declarationComparer);
+			}
+
+			return ns.members.length > 0 ? [primaryDecl, ns] : [primaryDecl];
 		} else if (typeof obj === 'object') {
 			// If we can immediately resolve this to a simple declaration, just do so
 			const simpleType = getTypeOfValue(obj);
@@ -288,7 +300,7 @@ function getClassInstanceMembers(ctor: any): dom.ClassMember[] {
 					const lhs = (node as ts.BinaryExpression).left;
 					if (lhs.kind === ts.SyntaxKind.PropertyAccessExpression) {
 						if ((lhs as ts.PropertyAccessExpression).expression.kind === ts.SyntaxKind.ThisKeyword) {
-							members.push(create.property((lhs as ts.PropertyAccessExpression).name.getText(), dom.type.any, dom.MemberFlags.None));
+							members.push(create.property((lhs as ts.PropertyAccessExpression).name.getText(), dom.type.any, dom.DeclarationFlags.None));
 						}
 					}
 				}

@@ -1,3 +1,4 @@
+export = lodash;
 declare class lodash {
     constructor(...args: any[]);
     add(...args: any[]): any;
@@ -318,9 +319,16 @@ declare class lodash {
     zipObjectDeep(...args: any[]): any;
     zipWith(...args: any[]): any;
 }
-
 declare namespace lodash {
     const VERSION: string;
+    const templateSettings: {
+        escape: RegExp;
+        evaluate: RegExp;
+        imports: {
+        };
+        interpolate: RegExp;
+        variable: string;
+    };
     function add(value: any, other: any): any;
     function after(n: any, func: any, ...args: any[]): any;
     function ary(func: any, n: any, guard: any): any;
@@ -577,14 +585,6 @@ declare namespace lodash {
     function takeWhile(array: any, predicate: any): any;
     function tap(value: any, interceptor: any): any;
     function template(string: any, options: any, guard: any): any;
-    const templateSettings: {
-        escape: RegExp;
-        evaluate: RegExp;
-        imports: {
-        };
-        interpolate: RegExp;
-        variable: string;
-    };
     function throttle(func: any, wait: any, options: any): any;
     function thru(value: any, interceptor: any): any;
     function times(n: any, iteratee: any): any;
@@ -634,4 +634,38 @@ declare namespace lodash {
     function zipObject(props: any, values: any): any;
     function zipObjectDeep(props: any, values: any): any;
     function zipWith(...args: any[]): any;
+    namespace bind {
+        // Circular reference from lodash.bind
+        const placeholder: any;
+    }
+    namespace bindKey {
+        // Circular reference from lodash.bindKey
+        const placeholder: any;
+    }
+    namespace curry {
+        // Circular reference from lodash.curry
+        const placeholder: any;
+    }
+    namespace curryRight {
+        // Circular reference from lodash.curryRight
+        const placeholder: any;
+    }
+    namespace memoize {
+        class Cache {
+            constructor(entries: any);
+            clear(): void;
+            delete(key: any): any;
+            get(key: any): any;
+            has(key: any): any;
+            set(key: any, value: any): any;
+        }
+    }
+    namespace partial {
+        // Circular reference from lodash.partial
+        const placeholder: any;
+    }
+    namespace partialRight {
+        // Circular reference from lodash.partialRight
+        const placeholder: any;
+    }
 }
