@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import * as _ from 'underscore';
 import * as dom from 'dts-dom';
-import { create } from 'dts-dom';
+import { create, reservedWords } from 'dts-dom';
 
 type object = { valueOf: 'oops '; prototype?: object; (): void;[s: string]: any; };
 
@@ -15,7 +15,7 @@ const enum ValueTypes {
 	Unknown = 1 << 5
 }
 
-const builtins: { [name: string]: (new(...args: any[]) => any)|undefined } = {
+const builtins: { [name: string]: (new (...args: any[]) => any) | undefined } = {
 	Date,
 	RegExp,
 	"Map": (typeof Map !== 'undefined') ? Map : undefined,
@@ -64,7 +64,7 @@ export function generateIdentifierDeclarationFile(name: string, value: any): str
 
 const walkStack = new Map<any, boolean>();
 
-const reservedFunctionProperties = Object.getOwnPropertyNames(function() { });
+const reservedFunctionProperties = Object.getOwnPropertyNames(function () { });
 function getKeysOfObject(obj: object) {
 	let keys: string[] = [];
 	let chain: {} = obj;
@@ -86,6 +86,21 @@ function isVisitableName(s: string) {
 	return (s[0] !== '_') && (["caller", "arguments", "constructor", "super_"].indexOf(s) < 0);
 }
 
+function isLegalIdentifier(s: string) {
+	if (s.length === 0) {
+		return false;
+	}
+	if (!ts.isIdentifierStart(s.charCodeAt(0), ts.ScriptTarget.Latest)) {
+		return false;
+	}
+	for (let i = 1; i < s.length; i++) {
+		if (!ts.isIdentifierPart(s.charCodeAt(i), ts.ScriptTarget.Latest)) {
+			return false;
+		}
+	}
+	return reservedWords.indexOf(s) < 0;
+}
+
 function isCallable(obj: {}) {
 	return typeof obj === 'function';
 }
@@ -99,9 +114,11 @@ function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaratio
 	if (walkStack.has(obj) || keyStack.length > 4) {
 		// Circular or too-deep reference
 		const result = create.const(name, dom.type.any);
-		result.comment = `${walkStack.has(obj) ? 'Circular reference' : 'Too-deep object hierarchy'} from ${keyStack.join('.')}`; 
+		result.comment = `${walkStack.has(obj) ? 'Circular reference' : 'Too-deep object hierarchy'} from ${keyStack.join('.')}`;
 		return [result];
 	}
+
+	if (!isLegalIdentifier(name)) return [];
 
 	walkStack.set(obj);
 	keyStack.push(name);
@@ -138,7 +155,11 @@ function getTopLevelDeclarations(name: string, obj: any): dom.TopLevelDeclaratio
 			// If we can immediately resolve this to a simple declaration, just do so
 			const simpleType = getTypeOfValue(obj);
 			if (typeof simpleType === 'string' || simpleType.kind === 'name' || simpleType.kind === 'array') {
-				return [dom.create.const(name, simpleType)];
+				const result = dom.create.const(name, simpleType);
+				if (simpleType === 'string') {
+					result.comment = `Value of string: "${simpleType.substr(0, 100)}${simpleType.length > 100 ? '...' : ''}"`;
+				}
+				return [result];
 			}
 
 			// If anything in here is classlike or functionlike, write it as a namespace.
@@ -173,7 +194,7 @@ function getTypeOfValue(value: any): dom.Type {
 	return res;
 
 	function getResult() {
-		for(const k in builtins) {
+		for (const k in builtins) {
 			if (builtins[k] && value instanceof builtins[k]!) {
 				return create.namedTypeReference(k);
 			}

@@ -3,7 +3,7 @@ const webpack = require('webpack');
  module.exports = {
      entry: './bin/browser/browser.js',
      output: {
-         path: './bin',
+         path: './docs',
          filename: 'browser-bundle.js'
      },
     plugins: [

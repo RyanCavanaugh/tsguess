@@ -4,24 +4,33 @@ import guess = require('../lib');
 	"use strict";
 
 	let css = `position: fixed;
+	display: inline-block;
 	left: 10%;
 	top: 10%;
-	bottom: 10%;
-	right: 10%;
+	width: auto;
+	height: auto;
+	padding: 2em;
+	margin-left: auto;
+	margin-right: auto;
 	border: solid black 2px;
 	z-index: 100000;
-	background-color: #AAAAAA;`;
+	background-color: #294E80;
+    color: white;
+	text-align: center;`;
 
 	let displayWindow = document.createElement('div');
 	displayWindow.setAttribute('id', 'tsguess-window');
 	displayWindow.setAttribute('style', css);
 	displayWindow.innerHTML = `
 		<div>tsguess Browser Type Guesser</div>
-		<div style="font-family: monospace">
-		  <input type="text" length="40" id="tsguess-input" placeholder="Enter any JavaScript identifier or expression" />
-		  <input type="submit" value="Generate" id="tsguess-generate" />
-		</div>
-		<textarea id="tsguess-output" style="font-family: monospace" rows="30" cols="80" placeholder="Generated .d.ts content will appear here" />
+		  <div style="font-family: monospace; text-align: left">
+            <form onsubmit="return false;">
+              <input type="text" length="40" id="tsguess-input" placeholder="Enter any JavaScript identifier or expression" />
+              <input type="submit" value="Generate" default id="tsguess-generate"  />
+            </form>
+		  </div>
+		  <textarea id="tsguess-output" style="font-family: monospace; align: center; border: solid black 2px;" rows="40" cols="120" placeholder="Generated .d.ts content will appear here"></textarea>
+        </div>
 	`;
 	window.setTimeout(() => {
 		const button = document.getElementById('tsguess-generate') as HTMLInputElement;
@@ -30,6 +39,12 @@ import guess = require('../lib');
 		button.addEventListener("click", () => {
 			output.value = guess.generateIdentifierDeclarationFile(input.value, eval(input.value));
 		});
+
+        (<any>window)['infer'] = function(name: string) {
+            input.value = name;
+            button.click();
+        };
+
 	}, 10);
 	
 	document.body.appendChild(displayWindow);

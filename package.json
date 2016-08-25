@@ -23,7 +23,8 @@
     "react": "latest"
   },
   "scripts": {
-    "test": "mocha bin/tests/test.js"
+    "test": "mocha bin/tests/test.js",
+    "build-browser": "tsc -p browser && webpack"
   },
   "repository": {
     "type": "git",

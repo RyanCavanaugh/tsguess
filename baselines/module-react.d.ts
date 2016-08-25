@@ -153,9 +153,6 @@ declare namespace react {
         function tspan(p0: any, p1: any): any;
         function u(p0: any, p1: any): any;
         function ul(p0: any, p1: any): any;
-        /* Unspeakable name 'var'
-        function var(p0: any, p1: any): any;
-        */
         function video(p0: any, p1: any): any;
         function wbr(p0: any, p1: any): any;
     }

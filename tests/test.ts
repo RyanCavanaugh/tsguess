@@ -21,7 +21,8 @@ const expressions: { [s: string]: any } = {
 	'Math': Math,
 	'selfref': selfRefExpr,
 	'builtIns': { d: new Date(3), arr: ['x']},
-	'someArray': [ 1, 'foo', Math, null, undefined, false ]
+	'someArray': [ 1, 'foo', Math, null, undefined, false ],
+	'badNames': { "*": 10, "default": true, "with": 10, "  ": 3 }
 };
 
 function checkDeclarationBaseline(name: string, content: string) {
