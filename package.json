@@ -2,9 +2,9 @@
   "name": "tsguess",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "bin/lib/index.js",
   "bin": {
-    "tsguess": "index.js"
+    "tsguess": "bin/lib/run.js"
   },
   "dependencies": {
     "typescript": "^2.1.0-dev.20160718",
